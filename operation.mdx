@@ -1,0 +1,64 @@
+---
+title: "Operation guide"
+sidebarTitle: "Operation"
+description: "Operate the timing phones and remote display during training."
+icon: "circle-play"
+---
+
+## Camera phone controls
+
+| Control | What it does |
+| --- | --- |
+| **ROLE** | Cycles the phone between START, SPLIT, and FINISH. |
+| **ARM / DISARM** | Enables or disables crossing detection. Arming resets detector state. |
+| **MANUAL TRIGGER** | Creates a timing event immediately for setup and network testing. |
+| **CAMERA: FRONT/BACK** | Rebuilds the Camera2 session using the other lens and disarms detection. |
+| **PREVIEW: ON/OFF** | Hides or restores the preview and overlay. Camera analysis continues while hidden. |
+
+The status area shows the active camera, requested and delivered frame rate, timestamp source, GNSS state, peer clock offset, and round-trip time.
+
+## Display controls
+
+A device in DISPLAY mode does not participate as a timing camera. It listens for device status and results, and exposes remote controls:
+
+- **ARM DEVICES / DISARM DEVICES** controls all three timing roles.
+- **PREVIEW ON/OFF** hides or restores previews on all timing phones.
+- Separate START, SPLIT, and FINISH sensitivity sliders target the detector on one role.
+- Status labels show connecting, mixed, armed, and preview states.
+- Result history stores the newest 12 completed runs locally on the display device.
+
+## Sensitivity
+
+Sensitivity ranges from `0` to `100`. Increasing it lowers both the per-pixel luma difference threshold and the zone-occupancy threshold, making the detector react to less movement.
+
+<Warning>
+  Higher sensitivity can help in poor contrast, but it also increases the chance of false triggers from shadows, camera shake, spectators, or exposure changes.
+</Warning>
+
+Start at `50`, then adjust one role at a time:
+
+1. Arm only the phone being tuned.
+2. Perform several realistic crossings.
+3. Increase sensitivity when crossings are missed.
+4. Decrease sensitivity when unrelated movement triggers the line.
+5. Recheck under the expected lighting and camera position.
+
+## Preview behavior
+
+Turning preview off changes only the opacity of the `TextureView` and timing-line overlay. The YUV analysis surface remains active, and an armed detector continues processing frames.
+
+This is useful when the display device is used as the primary control surface or when reducing visible distraction near a timing line.
+
+## Run lifecycle
+
+1. All three timing phones are positioned and connected.
+2. Each role is armed.
+3. A confirmed crossing creates one event and disarms that phone.
+4. The FINISH phone waits until it has one event from every role.
+5. It chooses GNSS only when all three events contain qualified GNSS mappings; otherwise it uses Wi-Fi-adjusted local timestamps.
+6. It sorts the three timestamps and calculates split, total time, uncertainty, and confidence.
+7. It broadcasts the result and clears the collected marks for the next run.
+
+<Note>
+  The calculation uses chronological timestamp order, not packet arrival order. Roles identify which device contributed an event, but the final three marks are sorted before durations are calculated.
+</Note>

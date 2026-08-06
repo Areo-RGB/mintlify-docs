@@ -1,0 +1,109 @@
+---
+title: "Architecture"
+description: "How camera timing, crossing detection, GNSS mapping, Wi-Fi synchronization, and result calculation fit together."
+icon: "network"
+---
+
+## Components
+
+| Kotlin component | Responsibility |
+| --- | --- |
+| `MainActivity` | Role selection, permissions, UI, run state, event collection, result publication, and display controls |
+| `CameraTimingController` | Camera2 session, YUV acquisition, source timestamps, frame cadence measurement, and detector delivery |
+| `LineCrossingDetector` | Three-zone luma motion state machine and interpolated crossing timestamp |
+| `GnssClockModel` | Weighted affine mapping from elapsed realtime to GNSS time with uncertainty |
+| `PeerTiming` | UDP discovery, four-timestamp clock exchange, event/result transport, remote controls, and status |
+| `ThreePointTiming` | Timestamp sorting, split/total calculation, uncertainty propagation, and confidence selection |
+
+## Camera pipeline
+
+`CameraTimingController` selects a camera by lens facing, requests a supported FPS range, and chooses a YUV `420_888` output size near `640×480` that can satisfy the target frame duration.
+
+The capture session sends frames to both:
+
+- A `TextureView` surface for preview
+- An `ImageReader` surface for timing analysis
+
+The listener uses `acquireLatestImage()`, so stale frames are dropped rather than queued. Event time comes from `Image.timestamp`, not processing completion time.
+
+The app reports the camera timestamp source as `REALTIME` when Camera2 advertises `SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME`; otherwise it reports `UNKNOWN`.
+
+## Crossing detector
+
+The detector reads only the Y/luma plane and samples every second row and column. The frame is divided into three horizontal motion zones across the athlete's direction of travel.
+
+Its state machine is:
+
+```text
+CLEAR → APPROACHING → ON_LINE → CROSSED_PENDING → CONFIRMED
+```
+
+A crossing requires ordered activity on the approach side, center, and departure side, followed by a confirmation frame. The estimated event time is interpolated between the previous and current source-frame timestamps. After confirmation, a 1.5-second refractory window prevents duplicate events.
+
+## GNSS clock mapping
+
+Each timing phone continuously gathers `GnssClock` samples containing both GNSS time and `elapsedRealtimeNanos`. It fits an affine relationship:
+
+```text
+gnssTime = rate × monotonicTime + offset
+```
+
+Samples are weighted by their reported timing uncertainty. The model retains up to 60 samples and reports:
+
+- `ACQUIRING` before enough samples exist
+- `LOCKED` when sample span, RMS error, and clock rate meet the stricter bounds
+- `DEGRADED` when a usable mapping exists but does not qualify as locked
+- `DISCONTINUITY` after the hardware clock discontinuity count changes
+- `INVALID` when required raw clock fields are unavailable
+
+## Wi-Fi synchronization
+
+`PeerTiming` uses a four-timestamp exchange for each discovered phone pair:
+
+```text
+request:  t1
+response: t1, t2, t3
+receive:  t4
+```
+
+It estimates:
+
+```text
+delay  = (t4 - t1) - (t3 - t2)
+offset = ((t2 - t1) + (t3 - t4)) / 2
+```
+
+Each peer keeps up to 20 offset/delay samples. The sample with the lowest measured delay is selected, and half of its round-trip delay becomes the Wi-Fi timing uncertainty.
+
+## UDP messages
+
+All traffic uses UDP port `48123`.
+
+| Type | Purpose |
+| --- | --- |
+| `1` | Clock synchronization request |
+| `2` | Clock synchronization response |
+| `3` | Timing event |
+| `4` | Final split/total result |
+| `5` | Discovery hello |
+| `6` | Remote control command |
+| `7` | Camera-phone status |
+
+Timing events are repeated more aggressively than ordinary status messages to reduce the chance of loss on local Wi-Fi.
+
+## Result calculation
+
+The FINISH phone waits for one mark from each role. When all three marks contain GNSS timestamps, it uses GNSS. Otherwise it uses the Wi-Fi-adjusted local timeline for all three marks.
+
+The chosen values are sorted chronologically:
+
+```text
+split = second - first
+total = third - first
+```
+
+Uncertainty is conservatively added across the relevant endpoints. Result confidence is the lowest detector confidence among the three marks.
+
+<Warning>
+  The current implementation is an MVP, not a certified timing system. Accuracy claims require physical-device qualification against an independent reference system.
+</Warning>
