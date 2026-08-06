@@ -1,47 +1,92 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "Install Sprint Timing and record a first three-point run."
+sidebarTitle: "Quickstart"
+icon:
+  name: "rocket"
+  library: "lucide"
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+## What you need
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+- Three Android camera phones running Android 10 / API 29 or newer
+- An optional fourth Android device for the DISPLAY interface
+- One shared Wi-Fi network or phone hotspot
+- Outdoor access with a clear view of the sky for GNSS timing
+- The debug APK from `app/build/outputs/apk/debug/app-debug.apk`
 
-## Prerequisites
+<Warning>
+  Install the same APK on every device. The app assigns its initial role from the device model: Pixel to START, Huawei to SPLIT, OnePlus to FINISH, and other devices to DISPLAY.
+</Warning>
 
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+## Install and connect
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Build the APK">
+    From the repository root, run:
 
     ```bash
-    npm install your-package
+    ./gradlew assembleDebug
+    ```
+
+    On Windows PowerShell or Command Prompt, use:
+
+    ```powershell
+    .\gradlew.bat assembleDebug
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
-
-    ```bash
-    your-cli init
-    ```
+  <Step title="Install on every device">
+    Install `app/build/outputs/apk/debug/app-debug.apk` on the three timing phones and, optionally, the display device.
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
-
-    ```bash
-    your-cli start
-    ```
+  <Step title="Join one network">
+    Connect all devices to the same Wi-Fi network or hotspot. The app communicates over UDP port `48123` using broadcast, discovered peers, and local-subnet discovery.
+  </Step>
+  <Step title="Grant permissions">
+    On timing phones, grant Camera and precise Location access. A DISPLAY device does not start camera or GNSS processing.
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## Position the timing phones
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
+1. Place the START phone at the starting line.
+2. Place the SPLIT phone at the intermediate timing line.
+3. Place the FINISH phone at the finish line.
+4. Aim each camera so the green vertical timing line crosses the athlete's path.
+5. Use **ROLE** to correct a device assignment when needed.
+6. Use **CAMERA: FRONT/BACK** before arming to select the usable camera.
+
+<Tip>
+  Camera switching automatically disarms the detector. Confirm the preview and timing line again before arming.
 </Tip>
+
+## Record a run
+
+<Steps>
+  <Step title="Wait for timing readiness">
+    Outdoors, wait for GNSS to show `LOCKED` or `DEGRADED`. The screen also reports the selected camera, target and delivered FPS, and timestamp source.
+  </Step>
+  <Step title="Arm the phones">
+    Tap **ARM** on all three camera phones, or tap **ARM DEVICES** on the DISPLAY device.
+  </Step>
+  <Step title="Run through the lines">
+    Cross START, then SPLIT, then FINISH. Each detector disarms itself after its confirmed crossing and sends one timestamp.
+  </Step>
+  <Step title="Read the result">
+    The FINISH phone calculates the split and total time and broadcasts the result. The DISPLAY device shows the same result and keeps up to 12 recent runs.
+  </Step>
+</Steps>
+
+A result includes:
+
+- Split time
+- Total finish time
+- Split and total uncertainty
+- GNSS confidence or a visible Wi-Fi fallback label
+
+## Test without running
+
+Tap **MANUAL TRIGGER** once on each camera phone in START, SPLIT, FINISH order. Manual events use the same clock mapping and result pipeline as detected crossings.
+
+<Note>
+  Manual trigger validates device discovery, clock mapping, event exchange, sorting, and result display. It does not validate camera detection or physical timing accuracy.
+</Note>

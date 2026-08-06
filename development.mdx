@@ -1,0 +1,82 @@
+---
+title: "Development"
+description: "Build, install, test, and qualify the Android sprint timing app."
+icon: "terminal"
+---
+
+## Requirements
+
+- Android SDK with compile SDK 35
+- JDK 17
+- Android 10 / API 29 or newer
+- USB debugging for ADB installation and logs
+
+The application ID is `com.sprinttiming.app`. The current app version is `1.0.0` with version code `1`.
+
+## Build
+
+```bash
+./gradlew assembleDebug
+```
+
+On Windows:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+The APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Install
+
+```bash
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+Install the same build on all timing and display devices.
+
+## Source layout
+
+```text
+app/src/main/java/com/sprinttiming/app/
+├── MainActivity.kt
+├── CameraTimingController.kt
+├── LineCrossingDetector.kt
+├── GnssClockModel.kt
+├── PeerTiming.kt
+└── ThreePointTiming.kt
+```
+
+## Testing boundary
+
+Emulators are suitable for UI, role state, permission failure flows, result formatting, local history, and pure timing calculations.
+
+Physical devices are required to validate camera timestamp source, delivered FPS, GNSS raw clocks, Wi-Fi synchronization, detector behavior, thermal performance, and end-to-end accuracy.
+
+## Qualification sequence
+
+<Steps>
+  <Step title="Camera timing">
+    Verify the selected physical lens reports usable source timestamps and stable frame intervals.
+  </Step>
+  <Step title="GNSS mapping">
+    Measure acquisition, uncertainty, drift, and discontinuity recovery outdoors.
+  </Step>
+  <Step title="Wi-Fi synchronization">
+    Record offset, round-trip time, packet loss, and reconnection behavior on the intended hotspot.
+  </Step>
+  <Step title="Detection tuning">
+    Test realistic crossings, lighting, shadows, camera stability, and sensitivity for every timing line.
+  </Step>
+  <Step title="Reference comparison">
+    Compare repeated complete runs against an independent timing system before making accuracy claims.
+  </Step>
+</Steps>
+
+## Current boundaries
+
+- The app is optimized for a small known device set.
+- Networking is unauthenticated local UDP.
+- Release minification is disabled.
+- Results are stored locally on the DISPLAY device.
+- There is no cloud sync, athlete database, export, or video transfer.

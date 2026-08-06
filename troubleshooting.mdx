@@ -1,0 +1,86 @@
+---
+title: "Troubleshooting"
+description: "Diagnose permissions, discovery, GNSS, camera, and detector issues."
+icon: "wrench"
+---
+
+## Devices do not connect
+
+Confirm that every device is on the same Wi-Fi network or hotspot and that client isolation is disabled. Sprint Timing uses UDP port `48123` and sends to broadcast addresses, known peers, and local subnet addresses.
+
+Try these checks in order:
+
+1. Keep the app open on all devices for several seconds.
+2. Confirm no VPN or firewall blocks local UDP traffic.
+3. Verify the hotspot allows connected clients to communicate with each other.
+4. Toggle Wi-Fi off and on, then reopen the app.
+5. Use **MANUAL TRIGGER** only after the display reports a connection and peer clock information begins updating.
+
+## GNSS remains ACQUIRING or INVALID
+
+Timing phones require precise Location permission and access to raw GNSS clock measurements.
+
+- Move outdoors with a clear view of the sky.
+- Enable Location/GPS in Android settings.
+- Wait for at least six valid samples.
+- Avoid moving the phone while the model is warming up.
+- A hardware clock discontinuity clears the sample window and temporarily reports `DISCONTINUITY`.
+
+The app accepts both `LOCKED` and `DEGRADED` mappings. If any one of the three event marks lacks a GNSS mapping, the complete run uses Wi-Fi fallback instead of mixing time domains.
+
+## Camera does not start
+
+- Grant Camera and precise Location permissions.
+- Confirm the device has an available camera matching the selected front or rear lens.
+- Switch cameras before arming.
+- Reopen the app after another application has released the camera.
+
+The app targets a YUV stream near `640×480` and selects an FPS range that contains the desired rate when available. The Pixel requests 60 FPS; other configured timing devices request 30 FPS.
+
+## Delivered FPS is lower than requested
+
+The displayed FPS is calculated from median source-frame intervals. It is evidence of delivered cadence, not merely the requested Camera2 range.
+
+Low cadence can result from:
+
+- Unsupported camera/FPS combinations
+- Low light and longer exposure
+- Thermal throttling
+- Device-specific Camera2 behavior
+- Competing camera or system workload
+
+Test the exact physical lens and lighting used during timing.
+
+## Missed crossings
+
+- Increase sensitivity gradually.
+- Improve contrast between the runner and background.
+- Keep the athlete's path centered on the green timing line.
+- Stabilize the phone and avoid moving backgrounds.
+- Ensure motion proceeds consistently across the frame rather than toward the camera.
+
+The detector expects ordered activity across three horizontal zones: approach side, center line, then departure side.
+
+## False triggers
+
+- Reduce sensitivity.
+- Avoid shadows crossing the line before the athlete.
+- Keep spectators and moving equipment outside the camera view.
+- Prevent camera shake.
+- Avoid automatic lighting changes where possible.
+
+After a confirmed crossing, the detector applies a 1.5-second refractory period and the phone disarms itself.
+
+## Result never appears
+
+The FINISH phone must receive one event from each timing role. Check that:
+
+- Exactly one phone is START, one is SPLIT, and one is FINISH.
+- All three phones were armed before the run.
+- Each phone shows that its timestamp was sent.
+- The FINISH phone remains open and connected.
+- Manual testing is performed in START, SPLIT, FINISH order with distinct timestamps.
+
+## Result is rejected
+
+The calculator rejects results when there are not exactly three marks, the split is zero or negative, or the total time is not greater than the split. This normally indicates duplicate, stale, or invalid timing events.
