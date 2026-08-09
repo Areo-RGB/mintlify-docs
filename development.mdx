@@ -1,0 +1,94 @@
+---
+title: "Development"
+description: "Build, test, debug, and understand the Pi monorepo."
+---
+
+# Development
+
+The repository is a TypeScript/npm-workspaces monorepo targeting Node.js 22.19 or newer.
+
+## Clone and build
+
+```bash
+git clone https://github.com/Areo-RGB/pi.git
+cd pi
+npm install --ignore-scripts
+npm run build
+```
+
+For an offline rebuild using the checked-in/generated model data:
+
+```bash
+npm run build:offline
+```
+
+## Run from source
+
+On Unix-like systems:
+
+```bash
+./pi-test.sh
+```
+
+The repository also includes `pi-test.ps1` and `pi-test.bat` for Windows workflows.
+
+## Checks and tests
+
+```bash
+npm run check
+npm test
+./test.sh
+```
+
+`npm run check` runs formatting/lint checks, dependency-policy checks, TypeScript checks, shrinkwrap/install-lock validation, and browser smoke checks.
+
+## Monorepo architecture
+
+```text
+packages/
+  ai/                # Provider-neutral LLM API and model catalogs
+  agent/             # Agent loop, tools, state, and message types
+  client/            # Client integration layer
+  coding-agent/      # Interactive CLI, resources, extensions, SDK
+  evals/             # Evaluation tooling
+  protocol/          # Shared protocol types
+  server/            # Server integration layer
+  session-backends/  # Pluggable session persistence
+  telemetry/         # Telemetry contracts and adapters
+  tui/               # Terminal UI primitives and rendering
+```
+
+The root build orders packages so lower-level runtime/UI/provider packages are built before the coding-agent package.
+
+## Forking and rebranding
+
+Pi supports fork branding through `package.json`:
+
+```json
+{
+  "piConfig": {
+    "name": "pi",
+    "configDir": ".pi"
+  }
+}
+```
+
+Change `name`, `configDir`, and the package `bin` field when rebranding a fork. These affect CLI branding, configuration paths, and related environment-variable names.
+
+## Package asset paths
+
+Code in the coding-agent package should use the repository config/path helpers rather than assuming `__dirname`, because Pi supports npm installs, standalone binaries, and source execution.
+
+## Debugging
+
+The hidden `/debug` command writes diagnostic information to:
+
+```text
+~/.pi/agent/pi-debug.log
+```
+
+It includes rendered TUI lines and recent messages sent to the model.
+
+## Supply-chain policy
+
+The repository treats dependency changes as reviewed code changes: direct external dependencies are pinned, the lockfile is the dependency ground truth, published CLI installs use a shrinkwrap, and CI validates dependency/install metadata.

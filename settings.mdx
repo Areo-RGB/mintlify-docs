@@ -1,0 +1,125 @@
+---
+title: "Settings"
+description: "Global and project configuration, trust, models, UI, retry, shell, sessions, and networking."
+---
+
+# Settings
+
+Pi uses JSON settings files, with project settings overriding global settings.
+
+| Location | Scope |
+| --- | --- |
+| `~/.pi/agent/settings.json` | Global |
+| `.pi/settings.json` | Current project |
+
+Use `/settings` for common options or edit the JSON files directly.
+
+## Project trust
+
+Project-local settings and executable resources are gated by project trust.
+
+The global `defaultProjectTrust` setting accepts:
+
+- `ask` — prompt in interactive mode; ignore untrusted project resources in non-interactive mode
+- `always` — trust project resources by default
+- `never` — ignore project resources by default
+
+One-off CLI overrides:
+
+```bash
+pi --approve
+pi --no-approve
+```
+
+Use `/trust` to save a decision for future sessions.
+
+## Model and thinking
+
+```json
+{
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-sonnet-4-5",
+  "defaultThinkingLevel": "medium"
+}
+```
+
+Thinking levels include `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max` when the selected model supports them.
+
+## UI and editor
+
+Useful settings include:
+
+- `theme`
+- `externalEditor`
+- `quietStartup`
+- `tuiMode`
+- `fullscreenExitOutput`
+- `fullscreenScrollbar`
+- `autocompleteMaxVisible`
+- `showHardwareCursor`
+
+Example for VS Code:
+
+```json
+{
+  "externalEditor": "code --wait"
+}
+```
+
+## Compaction
+
+```json
+{
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 16384,
+    "keepRecentTokens": 20000
+  }
+}
+```
+
+## Retry behavior
+
+```json
+{
+  "retry": {
+    "enabled": true,
+    "maxRetries": 3,
+    "baseDelayMs": 2000,
+    "provider": {
+      "maxRetries": 0,
+      "maxRetryDelayMs": 60000
+    }
+  }
+}
+```
+
+Pi separates agent-level retry behavior from provider/SDK retries.
+
+## Shell configuration
+
+On Windows or custom environments you can select a bash implementation:
+
+```json
+{
+  "shellPath": "C:\\Program Files\\Git\\bin\\bash.exe"
+}
+```
+
+Other shell-related options include `shellCommandPrefix` and `npmCommand`.
+
+## Sessions
+
+Set a custom session directory:
+
+```json
+{
+  "sessionDir": ".pi/sessions"
+}
+```
+
+Precedence is CLI `--session-dir`, then `PI_CODING_AGENT_SESSION_DIR`, then the JSON setting.
+
+## Network and offline mode
+
+A global `httpProxy` may be configured in settings. `PI_SKIP_VERSION_CHECK=1` disables version checks, while `--offline` or `PI_OFFLINE=1` disables startup network operations such as update checks and telemetry calls.

@@ -1,0 +1,93 @@
+---
+title: "SDK"
+description: "Embed Pi in Node.js applications, custom interfaces, and automated workflows."
+---
+
+# SDK
+
+The Pi SDK exposes the same agent capabilities used by the CLI so you can embed Pi in other Node.js applications.
+
+Typical uses include custom desktop/web/mobile interfaces, automated pipelines, programmatic testing, and tools that spawn sub-agents.
+
+## Install
+
+```bash
+npm install @earendil-works/pi-coding-agent
+```
+
+The SDK is part of the main coding-agent package.
+
+## Minimal session
+
+```typescript
+import {
+  createAgentSession,
+  ModelRuntime,
+  SessionManager,
+} from "@earendil-works/pi-coding-agent";
+
+const modelRuntime = await ModelRuntime.create();
+
+const { session } = await createAgentSession({
+  sessionManager: SessionManager.inMemory(),
+  modelRuntime,
+});
+
+session.subscribe((event) => {
+  if (
+    event.type === "message_update" &&
+    event.assistantMessageEvent.type === "text_delta"
+  ) {
+    process.stdout.write(event.assistantMessageEvent.delta);
+  }
+});
+
+await session.prompt("What files are in the current directory?");
+```
+
+## `createAgentSession()`
+
+This is the main factory for one `AgentSession`. It can use Pi's default resource discovery or explicit models/tools/session storage.
+
+```typescript
+import { createAgentSession, SessionManager } from "@earendil-works/pi-coding-agent";
+
+const { session } = await createAgentSession({
+  model: myModel,
+  tools: ["read", "bash"],
+  sessionManager: SessionManager.inMemory(),
+});
+```
+
+## `AgentSession`
+
+A session manages:
+
+- prompts and queued steering/follow-up messages
+- model and thinking-level state
+- event streaming
+- message history
+- session-tree navigation
+- compaction
+- abort/dispose lifecycle
+
+Common methods include `prompt()`, `steer()`, `followUp()`, `subscribe()`, `setModel()`, `setThinkingLevel()`, `navigateTree()`, `compact()`, `abort()`, and `dispose()`.
+
+## Runtime-level session replacement
+
+Use `createAgentSessionRuntime()` when your host application must replace the active session through new/resume/fork/import flows while rebuilding cwd-bound services.
+
+The runtime layer is what Pi's built-in interactive, print, and RPC modes use.
+
+After session replacement, `runtime.session` changes. Event subscriptions belong to the previous `AgentSession`, so re-subscribe and re-bind extensions to the new session when needed.
+
+## Lower-level integration modes
+
+If embedding the SDK is not the right fit, Pi also exposes process-oriented integration modes:
+
+```bash
+pi --mode json
+pi --mode rpc
+```
+
+Use JSON mode for a structured event stream and RPC mode for stdin/stdout request/response integration.

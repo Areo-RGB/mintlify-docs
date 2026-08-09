@@ -1,0 +1,112 @@
+---
+title: "Using Pi"
+description: "Interactive mode, commands, sessions, tools, and CLI workflows."
+icon:
+  name: "terminal"
+  library: "lucide"
+---
+
+# Using Pi
+
+Pi supports interactive terminal sessions, one-shot prompts, JSON event streaming, and RPC integration.
+
+## Interactive interface
+
+The terminal UI has four main areas:
+
+- **Startup header** — shortcuts and loaded resources
+- **Messages** — conversation, tool calls, results, notifications, and extension UI
+- **Editor** — prompt input and file references
+- **Footer** — working directory, session, model, context, token/cache usage, and cost
+
+### Editor shortcuts
+
+| Feature | How |
+| --- | --- |
+| Reference a file | Type `@` to fuzzy-search project files |
+| Complete a path | Tab |
+| Multi-line input | Shift\+Enter; Ctrl\+Enter in Windows Terminal |
+| Run a shell command | `!command` |
+| Run without adding output to model context | `!!command` |
+| Open external editor | Ctrl\+G |
+| Paste images | Ctrl\+V; Alt\+V on Windows |
+
+## Common slash commands
+
+| Command | Description |
+| --- | --- |
+| `/login`, `/logout` | Manage provider credentials |
+| `/model` | Switch models |
+| `/settings` | Change common settings |
+| `/resume` | Browse previous sessions |
+| `/new` | Start a new session |
+| `/session` | Show current session metadata |
+| `/tree` | Navigate to a point in the session tree |
+| `/fork` | Start a new session from an earlier message |
+| `/clone` | Duplicate the active branch into a new session |
+| `/compact [prompt]` | Compact older context |
+| `/export [file]` | Export a session |
+| `/import <file>` | Import a JSONL session |
+| `/reload` | Reload settings/resources/context |
+| `/trust` | Save project trust for future sessions |
+| `/quit` | Exit Pi |
+
+## Queue messages while Pi is working
+
+- **Enter** queues a steering message after the current assistant turn finishes its tool calls.
+- **Alt\+Enter** queues a follow-up after the agent completes its work.
+- **Escape** aborts and restores queued messages to the editor.
+- **Alt\+Up** retrieves queued messages.
+
+## Sessions
+
+Sessions are saved automatically under `~/.pi/agent/sessions/`, grouped by working directory.
+
+```bash
+pi -c                  # Continue most recent session
+pi -r                  # Browse sessions
+pi --no-session        # Ephemeral mode
+pi --name "my task"    # Name a session
+pi --session <path|id> # Open a specific session
+pi --fork <path|id>    # Fork into a new session file
+```
+
+## Context and project trust
+
+Pi loads global/project `AGENTS.md` or `CLAUDE.md` files at startup. Project-local settings and executable resources are gated by project trust.
+
+Interactive startup can ask whether to trust a project. Non-interactive modes do not show the prompt; they follow `defaultProjectTrust` unless overridden with `--approve` or `--no-approve`.
+
+## CLI modes
+
+```bash
+pi [options] [@files...] [messages...]
+```
+
+| Mode | Purpose |
+| --- | --- |
+| default | Interactive terminal UI |
+| `-p`, `--print` | Print one response and exit |
+| `--mode json` | Emit structured events as JSON lines |
+| `--mode rpc` | stdin/stdout RPC integration |
+
+## Tools
+
+Built-in tools are `read`, `bash`, `edit`, `write`, `grep`, `find`, and `ls`.
+
+Use `--tools`, `--exclude-tools`, `--no-builtin-tools`, or `--no-tools` to control availability.
+
+## Package management
+
+```bash
+pi install <source>
+pi remove <source>
+pi update --all
+pi update --self
+pi update --extensions
+pi update --models
+pi list
+pi config
+```
+
+Packages can bundle extensions, skills, prompts, and themes.
