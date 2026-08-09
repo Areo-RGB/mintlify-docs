@@ -1,0 +1,47 @@
+---
+title: "Windows Setup"
+description: "Configure the bash shell Pi requires on Windows."
+---
+
+# Windows Setup
+
+Pi requires a bash-compatible shell on Windows.
+
+Pi checks shell locations in this order:
+
+1. `shellPath` in `~/.pi/agent/settings.json`
+2. Git Bash at `C:\Program Files\Git\bin\bash.exe`
+3. `bash.exe` on `PATH`, such as Cygwin, MSYS2, or WSL
+
+For most Windows users, installing Git for Windows is enough.
+
+## Explicit Git Bash configuration
+
+```json
+{
+  "shellPath": "C:\\Program Files\\Git\\bin\\bash.exe"
+}
+```
+
+## Custom shell
+
+For Cygwin or another bash implementation:
+
+```json
+{
+  "shellPath": "C:\\cygwin64\\bin\\bash.exe"
+}
+```
+
+The `shellPath` setting supports a leading `~` for the home directory.
+
+## Windows Terminal notes
+
+- Multi-line input can use Ctrl\+Enter.
+- Image paste can use Alt\+V.
+- Alt\+Enter is fullscreen in Windows Terminal by default, so remap that shortcut if you want Pi to receive its queued follow-up shortcut.
+- Ctrl\+G opens the configured external editor; if none is configured, Pi can fall back to Notepad on Windows.
+
+## WSL
+
+If a usable `bash.exe` is on `PATH`, Pi can select it through the normal shell lookup. For predictable behavior, set `shellPath` explicitly when you have several bash implementations installed.

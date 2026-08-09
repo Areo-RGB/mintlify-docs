@@ -1,0 +1,92 @@
+---
+title: "Extensions"
+description: "Add custom tools, commands, lifecycle hooks, state, and terminal UI with TypeScript."
+---
+
+# Extensions
+
+Pi extensions are TypeScript modules that can change agent behavior and add new capabilities without modifying Pi core.
+
+## What extensions can do
+
+Extensions can:
+
+- register custom LLM-callable tools
+- add slash commands and keyboard shortcuts
+- subscribe to lifecycle, agent, model, session, and tool events
+- intercept or block tool calls
+- inject context or customize compaction
+- show confirmations, inputs, notifications, widgets, and custom TUI components
+- persist state across sessions
+- integrate external services and workflows
+
+## Locations
+
+For automatic discovery and `/reload`, place extensions in:
+
+| Location | Scope |
+| --- | --- |
+| `~/.pi/agent/extensions/*.ts` | Global |
+| `~/.pi/agent/extensions/*/index.ts` | Global directory extension |
+| `.pi/extensions/*.ts` | Project |
+| `.pi/extensions/*/index.ts` | Project directory extension |
+
+Project-local extensions load only after the project is trusted.
+
+Use `-e` / `--extension` for quick testing:
+
+```bash
+pi -e ./my-extension.ts
+```
+
+## Minimal extension
+
+```typescript
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
+
+export default function (pi: ExtensionAPI) {
+  pi.on("session_start", async (_event, ctx) => {
+    ctx.ui.notify("Extension loaded", "info");
+  });
+
+  pi.registerTool({
+    name: "greet",
+    label: "Greet",
+    description: "Greet someone by name",
+    parameters: Type.Object({
+      name: Type.String(),
+    }),
+    async execute(_id, params) {
+      return {
+        content: [{ type: "text", text: `Hello, ${params.name}!` }],
+        details: {},
+      };
+    },
+  });
+
+  pi.registerCommand("hello", {
+    description: "Say hello",
+    handler: async (args, ctx) => {
+      ctx.ui.notify(`Hello ${args || "world"}!`, "info");
+    },
+  });
+}
+```
+
+Pi loads TypeScript extensions through `jiti`, so they do not need a separate compilation step.
+
+## Available imports
+
+| Package | Purpose |
+| --- | --- |
+| `@earendil-works/pi-coding-agent` | Extension APIs and event types |
+| `typebox` | Tool parameter schemas |
+| `@earendil-works/pi-ai` | AI/provider utilities |
+| `@earendil-works/pi-tui` | Terminal UI components |
+
+Normal npm dependencies and Node.js built-ins are also available.
+
+## Security
+
+Extensions execute with the permissions of the Pi process and can run arbitrary code. Only load extensions from sources you trust. Project trust protects against silently loading project-local executable resources.

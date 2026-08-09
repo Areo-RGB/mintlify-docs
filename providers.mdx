@@ -1,0 +1,105 @@
+---
+title: "Providers & Authentication"
+description: "Configure subscription providers, API keys, auth storage, and cloud providers."
+---
+
+# Providers & Authentication
+
+Pi supports subscription-backed providers through OAuth/login flows and API-key providers through environment variables or `~/.pi/agent/auth.json`.
+
+## Subscription logins
+
+Run `/login` in interactive mode and choose a provider.
+
+Built-in subscription flows include:
+
+- ChatGPT Plus/Pro via Codex
+- Claude Pro/Max
+- GitHub Copilot
+- xAI subscription
+- OpenRouter OAuth
+- Radius
+
+Use `/logout` to clear stored credentials.
+
+## API keys
+
+You can set credentials before launching Pi:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY=sk-...
+pi
+```
+
+Common variables include:
+
+| Provider | Environment variable |
+| --- | --- |
+| Anthropic | `ANTHROPIC_API_KEY` |
+| OpenAI | `OPENAI_API_KEY` |
+| Google Gemini | `GEMINI_API_KEY` |
+| DeepSeek | `DEEPSEEK_API_KEY` |
+| Groq | `GROQ_API_KEY` |
+| Mistral | `MISTRAL_API_KEY` |
+| xAI | `XAI_API_KEY` |
+| OpenRouter | `OPENROUTER_API_KEY` |
+| Vercel AI Gateway | `AI_GATEWAY_API_KEY` |
+| Hugging Face | `HF_TOKEN` |
+| Together AI | `TOGETHER_API_KEY` |
+| Fireworks | `FIREWORKS_API_KEY` |
+
+Pi supports many additional providers, including Azure OpenAI, Amazon Bedrock, Cloudflare AI Gateway, Cloudflare Workers AI, NVIDIA NIM, ZAI, Qwen plans, MiniMax, Kimi, and others.
+
+## Auth file
+
+Credentials may be stored in:
+
+```text
+~/.pi/agent/auth.json
+```
+
+Example:
+
+```json
+{
+  "anthropic": { "type": "api_key", "key": "$ANTHROPIC_API_KEY" },
+  "openai": { "type": "api_key", "key": "$OPENAI_API_KEY" }
+}
+```
+
+Auth-file credentials take precedence over process environment variables. The file is created with user-only permissions on supported systems.
+
+### Key resolution
+
+The `key` field supports:
+
+- literal values
+- `$ENV_VAR` and `${ENV_VAR}` interpolation
+- `!command` to resolve a secret from a command such as a password manager
+
+Example:
+
+```json
+{
+  "anthropic": {
+    "type": "api_key",
+    "key": "!op read 'op://vault/item/credential'"
+  }
+}
+```
+
+## Cloud-provider configuration
+
+Cloud providers use their normal SDK/environment configuration in addition to Pi credentials. Examples include Azure OpenAI resource/base URL variables and AWS profiles, IAM keys, or Bedrock bearer tokens.
+
+## Model selection
+
+Use `/model` interactively, or pass model settings on the CLI:
+
+```bash
+pi --provider anthropic --model claude-sonnet-4-5
+pi --provider openai --model gpt-5
+```
+
+Use `--list-models [search]` to inspect available models.

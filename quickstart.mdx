@@ -1,47 +1,119 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "Install Pi, authenticate, add project instructions, and run your first session."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+# Quickstart
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+Get from installation to a useful Pi session in a few minutes.
 
-## Prerequisites
+## 1. Install Pi
 
-Before you begin, you must have:
+```bash
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+```
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+`--ignore-scripts` disables dependency lifecycle scripts during installation. Pi does not require install scripts for a normal npm install.
 
-## Get started
+On Linux or macOS, the project also provides an installer:
 
-<Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+```bash
+curl -fsSL https://pi.dev/install.sh | sh
+```
 
-    ```bash
-    npm install your-package
-    ```
-  </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+## 2. Start Pi in a project
 
-    ```bash
-    your-cli init
-    ```
-  </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+```bash
+cd /path/to/project
+pi
+```
 
-    ```bash
-    your-cli start
-    ```
-  </Step>
-</Steps>
+Pi works from the current directory and can read, edit, create files, and execute shell commands there.
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## 3. Authenticate
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+For subscription-backed providers, run:
+
+```text
+/login
+```
+
+Built-in subscription flows include ChatGPT Plus/Pro via Codex, Claude Pro/Max, and GitHub Copilot.
+
+For API-key providers, you can set the appropriate environment variable before launch:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+pi
+```
+
+You can also use `/login` to store API keys in `~/.pi/agent/auth.json`.
+
+See [Providers & authentication](/providers) for the full provider setup.
+
+## 4. Run a first task
+
+Enter a request such as:
+
+```text
+Summarize this repository and tell me how to run its checks.
+```
+
+The default tools are:
+
+- `read` — read files
+- `write` — create or replace files
+- `edit` — patch files
+- `bash` — run shell commands
+
+Use git or another checkpointing workflow if you want easy rollback of agent changes.
+
+## 5. Add project instructions
+
+Create an `AGENTS.md` file in your project:
+
+```markdown
+# Project Instructions
+
+- Run `npm run check` after code changes.
+- Do not run production migrations locally.
+- Keep responses concise.
+```
+
+Pi loads global instructions from `~/.pi/agent/AGENTS.md` and project instructions from `AGENTS.md` or `CLAUDE.md` while walking down to the current directory. `AGENTS.override.md` overrides the normal context file for its directory.
+
+Run `/reload` or restart Pi after changing context files.
+
+## Useful first commands
+
+| Command | Purpose |
+| --- | --- |
+| `/model` | Choose a model |
+| `/settings` | Change common settings |
+| `/resume` | Open a previous session |
+| `/new` | Start a new session |
+| `/tree` | Navigate the current session tree |
+| `/compact` | Summarize older context |
+| `/reload` | Reload extensions, skills, prompts, themes, and context |
+| `/trust` | Save a project trust decision |
+
+## Non-interactive use
+
+```bash
+pi -p "Summarize this codebase"
+cat README.md | pi -p "Summarize this text"
+pi -p @screenshot.png "What is in this image?"
+```
+
+For integrations, use `--mode json` for a JSON event stream or `--mode rpc` for stdin/stdout RPC.
+
+## Continue a session
+
+```bash
+pi -c                  # Continue the most recent session
+pi -r                  # Browse previous sessions
+pi --name "my task"    # Name a new session
+pi --session <path|id> # Open a specific session
+```
+
+Next: [Using Pi](/usage).
